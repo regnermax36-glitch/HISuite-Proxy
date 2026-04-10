@@ -1,0 +1,35 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ "implement-port-mode-two-click-2472215011948650659" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.0.6
+
+    - name: Restore NuGet packages
+      run: nuget restore "HiSuite Proxy.sln"
+
+    - name: Build
+      run: msbuild "HiSuite Proxy.sln" /p:Configuration=Release
+
+    - name: Create Zip
+      run: |
+        powershell Compress-Archive -Path "HiSuite Proxy\bin\Release\*" -DestinationPath "HiSuite-Proxy-Release.zip"
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: HiSuite-Proxy-Release
+        path: HiSuite-Proxy-Release.zip

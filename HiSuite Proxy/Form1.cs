@@ -17,7 +17,7 @@ namespace HiSuite_Proxy
 {
     public partial class Form1 : Form
     {
-        ProxyServer proxyserver = new ProxyServer();      
+        ProxyServer proxyserver = new ProxyServer();
         ExplicitProxyEndPoint endpoint = new ExplicitProxyEndPoint(IPAddress.Any, 7777);
         public class CustomData
         {
@@ -29,7 +29,7 @@ namespace HiSuite_Proxy
 
         private class PackageData
         {
-            public string 
+            public string
                 PackageFile,
                 PackageSize,
                 PackageName,
@@ -45,6 +45,7 @@ namespace HiSuite_Proxy
             }
         }
         PackageData basePKGData = null, custPKGData = null, preloadPGKData = null;
+        bool baseFirmwareSet = false, custFirmwareSet = false, preloadFirmwareSet = false;
         public Form1(string[] arguments)
         {
             if (arguments.Length > 0 && arguments.Length == 2)
@@ -94,7 +95,7 @@ namespace HiSuite_Proxy
                 proxyserver.BeforeResponse += Proxyserver_BeforeResponse;
 
                 proxyserver.AddEndPoint(endpoint);
-                
+
                 proxyserver.Start();
             }
             catch (Exception ex)
@@ -156,6 +157,10 @@ namespace HiSuite_Proxy
                 {
                     textBox10.Enabled = false;
                 }
+            };
+            checkBox10.CheckedChanged += delegate
+            {
+                baseFirmwareSet = custFirmwareSet = preloadFirmwareSet = false;
             };
         }
 
@@ -245,7 +250,7 @@ namespace HiSuite_Proxy
                 else
                     return "Unknown";
             }
-            
+
         }
         private async Task Proxyserver_BeforeRequest(object sender, Titanium.Web.Proxy.EventArguments.SessionEventArgs e)
         {
@@ -305,10 +310,32 @@ namespace HiSuite_Proxy
                         {
                             if (BodyData[1].Contains("-PRELOAD "))
                             {
-                                textBox4.Text = BodyData[2];
-                                textBox5.Text = BodyData[1];
-                                textBox11.Text = BodyData[0];
-                                checkBox1.Checked = true;
+                                if (checkBox10.Checked && !preloadFirmwareSet)
+                                {
+                                    textBox4.Text = BodyData[2];
+                                    textBox5.Text = BodyData[1];
+                                    _customData.CustomPreload = false;
+                                    preloadFirmwareSet = true;
+                                }
+                                else
+                                {
+                                    if (checkBox10.Checked)
+                                    {
+                                        textBox5.Text = BodyData[1];
+                                        textBox11.Text = BodyData[0];
+                                        _customData.CustomPreload = true;
+                                        _customData.CustomPreloadID = BodyData[0];
+                                    }
+                                    else
+                                    {
+                                        textBox4.Text = BodyData[2];
+                                        textBox5.Text = BodyData[1];
+                                        textBox11.Text = BodyData[0];
+                                        _customData.CustomPreload = false;
+                                    }
+                                    checkBox1.Checked = true;
+                                    preloadFirmwareSet = false;
+                                }
                                 //Activate();
 
                                 Dictionary<string, HttpHeader> Headers = new Dictionary<string, HttpHeader>();
@@ -318,10 +345,32 @@ namespace HiSuite_Proxy
                             }
                             else if (BodyData[1].Contains("-CUST "))
                             {
-                                textBox7.Text = BodyData[2];
-                                textBox6.Text = BodyData[1];
-                                textBox10.Text = BodyData[0];
-                                checkBox3.Checked = true;
+                                if (checkBox10.Checked && !custFirmwareSet)
+                                {
+                                    textBox7.Text = BodyData[2];
+                                    textBox6.Text = BodyData[1];
+                                    _customData.CustomCust = false;
+                                    custFirmwareSet = true;
+                                }
+                                else
+                                {
+                                    if (checkBox10.Checked)
+                                    {
+                                        textBox6.Text = BodyData[1];
+                                        textBox10.Text = BodyData[0];
+                                        _customData.CustomCust = true;
+                                        _customData.CustomCustID = BodyData[0];
+                                    }
+                                    else
+                                    {
+                                        textBox7.Text = BodyData[2];
+                                        textBox6.Text = BodyData[1];
+                                        textBox10.Text = BodyData[0];
+                                        _customData.CustomCust = false;
+                                    }
+                                    checkBox3.Checked = true;
+                                    custFirmwareSet = false;
+                                }
                                 //Activate();
 
                                 Dictionary<string, HttpHeader> Headers = new Dictionary<string, HttpHeader>();
@@ -331,9 +380,31 @@ namespace HiSuite_Proxy
                             }
                             else
                             {
-                                textBox1.Text = BodyData[2];
-                                textBox2.Text = BodyData[1];
-                                textBox9.Text = BodyData[0];
+                                if (checkBox10.Checked && !baseFirmwareSet)
+                                {
+                                    textBox1.Text = BodyData[2];
+                                    textBox2.Text = BodyData[1];
+                                    _customData.CustomBase = false;
+                                    baseFirmwareSet = true;
+                                }
+                                else
+                                {
+                                    if (checkBox10.Checked)
+                                    {
+                                        textBox2.Text = BodyData[1];
+                                        textBox9.Text = BodyData[0];
+                                        _customData.CustomBase = true;
+                                        _customData.CustomBaseID = BodyData[0];
+                                    }
+                                    else
+                                    {
+                                        textBox1.Text = BodyData[2];
+                                        textBox2.Text = BodyData[1];
+                                        textBox9.Text = BodyData[0];
+                                        _customData.CustomBase = false;
+                                    }
+                                    baseFirmwareSet = false;
+                                }
                                 //Activate();
 
                                 Dictionary<string, HttpHeader> Headers = new Dictionary<string, HttpHeader>();
@@ -751,7 +822,7 @@ namespace HiSuite_Proxy
                         e.Ok(Properties.Resources.changelog, Headers, true);
                     }
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -1024,7 +1095,7 @@ namespace HiSuite_Proxy
                 firmFinder.Show(this);
                 firmFinder.BringToFront();
                 firmFinder.Focus();
-            }          
+            }
         }
         private bool CopyingBase = false, CopyingCust = false, CopyingPreload = false;
 
@@ -1072,7 +1143,7 @@ namespace HiSuite_Proxy
             Progress progress = new Progress("Copying File For " + romname);
             new Thread(() =>
             {
-                
+
                 bool finished = false, formLoaded = false;
                 progress.Load += delegate
                 {
@@ -1306,7 +1377,7 @@ namespace HiSuite_Proxy
             try
             {
                 string dir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\HiSuite\ROM\" + romname + @"\full\" + packagename;
-                
+
                 if(File.Exists(dir))
                 {
                     long victimlen = new FileInfo(dir).Length, mainfilelen = new FileInfo(filename).Length;
