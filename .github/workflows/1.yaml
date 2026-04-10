@@ -1,0 +1,41 @@
+name: Build Windows Release
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v2
+
+    - name: Restore NuGet Packages
+      run: nuget restore "HiSuite Proxy.sln"
+
+    - name: Build Solution
+      run: |
+        msbuild "HiSuite Proxy.sln" /p:Configuration=Release /p:Platform="Any CPU" /p:OutputPath=..\build_output
+
+    - name: Create Zip Archive
+      shell: powershell
+      run: |
+        Compress-Archive -Path .\build_output\* -DestinationPath HISuite-Proxy-Windows.zip
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: HISuite-Proxy-Windows-Version
+        path: HISuite-Proxy-Windows.zip
+        retention-days: 5
