@@ -10,13 +10,13 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@v2
 
     - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1.0.6
+      uses: NuGet/setup-nuget@v2
 
     - name: Restore NuGet packages
       run: nuget restore "HiSuite Proxy.sln"
@@ -28,8 +28,19 @@ jobs:
       run: |
         powershell Compress-Archive -Path "HiSuite Proxy\bin\Release\*" -DestinationPath "HiSuite-Proxy-Release.zip"
 
+    - name: Upload to Gofile
+      id: upload_gofile
+      shell: bash
+      run: |
+        SERVER=$(curl -s https://api.gofile.io/servers | jq -r '.data.servers[0].name')
+        RESPONSE=$(curl -F "file=@HiSuite-Proxy-Release.zip" https://${SERVER}.gofile.io/contents/uploadfile)
+        URL=$(echo $RESPONSE | jq -r '.data.downloadPage')
+        echo "DOWNLOAD_URL=$URL" >> $GITHUB_OUTPUT
+        echo "### HiSuite Proxy Build Artifact" >> $GITHUB_STEP_SUMMARY
+        echo "Download Link: [$URL]($URL)" >> $GITHUB_STEP_SUMMARY
+
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: HiSuite-Proxy-Release
         path: HiSuite-Proxy-Release.zip
